@@ -5,6 +5,10 @@ on:
     branches: [main]
   pull_request:
 
+defaults:
+  run:
+    working-directory: frontend
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -14,6 +18,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run lint
 
@@ -26,6 +31,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       # Vitest menguji src/utils/status.js langsung, tanpa memanggil
       # Laravel sama sekali -> lulus walau backend mati.
@@ -40,6 +46,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run build
         env:
@@ -49,7 +56,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: dist/
+          path: frontend/dist/
 
   # Hanya jalan saat push ke main (bukan saat Pull Request), dan memakai
   # dist/ yang sudah dibangun oleh job "build" di atas -> tidak build ulang.
@@ -70,6 +77,7 @@ jobs:
           path: dist
       - name: Bukti isi dist/ (tanpa build ulang)
         run: find dist -type f
+        working-directory: .
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
