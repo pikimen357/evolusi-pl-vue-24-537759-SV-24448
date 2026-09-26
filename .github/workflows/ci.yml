@@ -1,0 +1,106 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+defaults:
+  run:
+    working-directory: frontend
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      # Vitest menguji src/utils/status.js langsung, tanpa memanggil
+      # Laravel sama sekali -> lulus walau backend mati.
+      - run: npm run test:unit
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run build
+        env:
+          # Ganti lewat secrets.VITE_API_URL di repo kalian kalau backend
+          # produksi punya alamat berbeda dari default .env.example.
+          VITE_API_URL: ${{ secrets.VITE_API_URL || 'http://127.0.0.1:8001' }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: frontend/dist/
+
+  # Hanya jalan saat push ke main (bukan saat Pull Request), dan memakai
+  # dist/ yang sudah dibangun oleh job "build" di atas -> tidak build ulang.
+  deploy-pages:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Bukti isi dist/ (tanpa build ulang)
+        run: find dist -type f
+        working-directory: .
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - uses: actions/deploy-pages@v4
+        id: deployment
+
+  # BONUS (+30): deploy ke Vercel dari GitHub Actions, memakai dist/ yang
+  # sama dari job "build". Butuh secrets.VERCEL_TOKEN. Matikan Git
+  # Integration otomatis di dashboard Vercel supaya tidak dobel-deploy.
+  deploy-vercel:
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Bukti isi dist/ (tanpa build ulang)
+        run: find dist -type f
+        working-directory: .
+      - name: Deploy dist/ ke Vercel
+        working-directory: .
+        run: |
+          npm i -g vercel
+          vercel deploy dist --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
