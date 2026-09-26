@@ -14,8 +14,7 @@
    → `GET http://127.0.0.1:8001/api/services` harus mengembalikan JSON
    persis format di soal (`success`, `services[]`, `summary`, `lastUpdated`).
 
-## 2. Frontend Vue (poin 2, 20%)
-
+## 2. Frontend Vue 
 1. Salin folder `frontend/` ke dalam repo `evolusi-pl-NIM` kalian (sejajar
    dengan folder Laravel-nya).
 2. `cd frontend && cp .env.example .env` — isi `VITE_API_URL` sesuai alamat
@@ -57,22 +56,4 @@ dijalankan sama sekali.
 - Screenshot halaman **Layanan** menampilkan data asli dari Laravel.
 - Log job `deploy-pages`/`deploy-vercel` yang mencetak isi `dist/`.
 
-## 6. Bonus Vercel +30
 
-- Buat project di Vercel, ambil `VERCEL_TOKEN`, simpan sebagai secret repo
-  `VERCEL_TOKEN` (dan `VITE_API_URL` kalau backend produksinya beda alamat).
-- **Matikan** Git Integration otomatis di dashboard Vercel (Settings →
-  Git) supaya deploy hanya lewat Actions, tidak dobel dengan auto-deploy
-  Vercel sendiri.
-- `frontend/vercel.json` sudah berisi rewrite ke `index.html` supaya
-  halaman `/services` tidak 404 saat di-refresh langsung.
-- Pesan error jelas saat Laravel tidak terhubung sudah ada di
-  `Services.vue` (blok `v-else-if="error"`).
-
-## 7. Laporan PDF (poin 8, 20%)
-
-Tulis laporan yang menjelaskan: cara `Services.vue` mengambil data lewat
-`VITE_API_URL`, alur 4 job di `ci.yml`, cara `dist/` dioper antar-job lewat
-artifact, cara kerja penjaga `if:` pada job deploy, dan kendala yang
-kalian temui. Kalau mau, saya bisa bantu susun draftnya sebagai file Word
-terpisah — tinggal bilang.
