@@ -5,10 +5,6 @@ on:
     branches: [main]
   pull_request:
 
-defaults:
-  run:
-    working-directory: frontend
-
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -18,7 +14,6 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run lint
 
@@ -31,10 +26,7 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
       - run: npm ci
-      # Vitest menguji src/utils/status.js langsung, tanpa memanggil
-      # Laravel sama sekali -> lulus walau backend mati.
       - run: npm run test:unit
 
   build:
@@ -46,20 +38,15 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm run build
         env:
-          # Ganti lewat secrets.VITE_API_URL di repo kalian kalau backend
-          # produksi punya alamat berbeda dari default .env.example.
           VITE_API_URL: ${{ secrets.VITE_API_URL || 'http://127.0.0.1:8001' }}
       - uses: actions/upload-artifact@v4
         with:
           name: dist
-          path: frontend/dist/
+          path: dist/
 
-  # Hanya jalan saat push ke main (bukan saat Pull Request), dan memakai
-  # dist/ yang sudah dibangun oleh job "build" di atas -> tidak build ulang.
   deploy-pages:
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -77,7 +64,6 @@ jobs:
           path: dist
       - name: Bukti isi dist/ (tanpa build ulang)
         run: find dist -type f
-        working-directory: .
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

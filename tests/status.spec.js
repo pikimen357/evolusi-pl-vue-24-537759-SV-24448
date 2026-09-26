@@ -3,7 +3,7 @@ import { statusBadgeClass } from '../src/utils/status'
 
 describe('statusBadgeClass', () => {
   it('memberi kelas online untuk status online', () => {
-    expect(statusBadgeClass('online')).toBe('badge badge--online')
+    expect(statusBadgeClass('online')).toBe('badge NGWWAEUR')
   })
 
   it('memberi kelas offline untuk status offline', () => {
